@@ -88,9 +88,9 @@ var _ = Describe("Client methods", func() {
 
 		mux.HandleFunc("/api/projects", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]interface{}{
+			json.NewEncoder(w).Encode(map[string]any{
 				"items": []map[string]string{},
-				"included": map[string]interface{}{
+				"included": map[string]any{
 					"boards": []map[string]string{},
 				},
 			})
@@ -98,14 +98,14 @@ var _ = Describe("Client methods", func() {
 
 		mux.HandleFunc("/api/boards/b1", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]interface{}{
-				"item": map[string]interface{}{
+			json.NewEncoder(w).Encode(map[string]any{
+				"item": map[string]any{
 					"id": "b1", "name": "Board A", "projectId": "p1",
 					"alwaysDisplayCardCreator": false, "defaultCardType": "task", "defaultView": "board",
 					"expandTaskListsByDefault": false, "limitCardTypesToDefaultOne": false, "position": 0,
 				},
-				"included": map[string]interface{}{
-					"lists": []map[string]interface{}{
+				"included": map[string]any{
+					"lists": []map[string]any{
 						{"id": "l1", "name": "To Do", "type": "active", "boardId": "b1", "position": 0},
 					},
 				},
@@ -114,36 +114,36 @@ var _ = Describe("Client methods", func() {
 
 		mux.HandleFunc("/api/lists/l1/cards", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]interface{}{
+			json.NewEncoder(w).Encode(map[string]any{
 				"items": []map[string]string{},
 			})
 		})
 
 		mux.HandleFunc("/api/cards/c1", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]interface{}{
+			json.NewEncoder(w).Encode(map[string]any{
 				"item": map[string]string{"id": "c1", "name": "Card 1"},
 			})
 		})
 
 		mux.HandleFunc("/api/cards/c1/comments", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]interface{}{
+			json.NewEncoder(w).Encode(map[string]any{
 				"items": []map[string]string{},
 			})
 		})
 
 		mux.HandleFunc("/api/notifications", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]interface{}{
-				"items": []map[string]interface{}{},
+			json.NewEncoder(w).Encode(map[string]any{
+				"items": []map[string]any{},
 			})
 		})
 
 		mux.HandleFunc("/api/users", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]interface{}{
-				"items": []map[string]interface{}{},
+			json.NewEncoder(w).Encode(map[string]any{
+				"items": []map[string]any{},
 			})
 		})
 
@@ -257,8 +257,8 @@ var _ = Describe("Client methods with auth", func() {
 				return
 			}
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]interface{}{
-				"items": []map[string]interface{}{
+			json.NewEncoder(w).Encode(map[string]any{
+				"items": []map[string]any{
 					{"id": "u1", "username": "admin"},
 				},
 			})
@@ -271,7 +271,7 @@ var _ = Describe("Client methods with auth", func() {
 				return
 			}
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]interface{}{
+			json.NewEncoder(w).Encode(map[string]any{
 				"items": []map[string]string{},
 			})
 		})
