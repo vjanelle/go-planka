@@ -132,17 +132,18 @@ The CLI stores credentials in `~/.planka/config.json`.
 
 ## Development
 
-### Regenerating the client
+### Make targets
 
 ```bash
-oapi-codegen --package planka --generate types,client -o pkg/planka/planka_api.go swagger.json
+make build
+make test
+make coverage
+make fmt
+make vet
+make generate
 ```
 
-### Running tests
-
-```bash
-ginkgo run ./pkg/...
-```
+The Ginkgo and oapi-codegen tools are pinned in `go.mod` and run with `go tool`.
 
 ## License
 
