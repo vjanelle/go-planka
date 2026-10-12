@@ -10,8 +10,8 @@ import (
 	"text/tabwriter"
 
 	"github.com/choria-io/fisk"
-	"github.com/zalando/go-keyring"
 	"github.com/vjanelle/go-planka/pkg/planka"
+	"github.com/zalando/go-keyring"
 )
 
 type Config struct {
@@ -360,7 +360,11 @@ func main() {
 			return fmt.Errorf("error: %s", string(resp.Body))
 		}
 		for _, c := range resp.JSON200.Items {
-			fmt.Printf("[%s] %s\n", c.UserId, c.Text)
+			userID := "unknown"
+			if c.UserId != nil {
+				userID = *c.UserId
+			}
+			fmt.Printf("[%s] %s\n", userID, c.Text)
 		}
 		return nil
 	})

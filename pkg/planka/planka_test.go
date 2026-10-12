@@ -308,5 +308,3 @@ var _ = Describe("Client methods with auth", func() {
 		Expect(resp.JSON200).To(BeNil())
 	})
 })
-
-
