@@ -10,14 +10,12 @@ import (
 	"text/tabwriter"
 
 	"github.com/choria-io/fisk"
+	"github.com/zalando/go-keyring"
 	"github.com/vjanelle/go-planka/pkg/planka"
 )
 
 type Config struct {
 	URL      string `json:"url"`
-	Token    string `json:"token"`
-	APIKey   string `json:"api_key"`
-	UserID   string `json:"user_id"`
 	Username string `json:"username"`
 }
 
@@ -44,18 +42,37 @@ func saveConfig(cfg *Config) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(configPath(), data, 0o644)
+	return os.WriteFile(configPath(), data, 0o600)
+}
+
+func keychainGet(key string) (string, error) {
+	return keyring.Get("planka", key)
+}
+
+func keychainSet(key, value string) error {
+	return keyring.Set("planka", key, value)
+}
+
+func keychainClear() error {
+	for _, key := range []string{"url", "token", "api_key", "user_id"} {
+		keyring.Delete("planka", key)
+	}
+	return nil
 }
 
 func getClient(cfg *Config) *planka.ClientWithResponses {
+	url := cfg.URL
+	token, _ := keychainGet("token")
+	apiKey, _ := keychainGet("api_key")
+
 	var c *planka.ClientWithResponses
 	var err error
-	if cfg.Token != "" {
-		c, err = planka.AuthClient(cfg.URL, cfg.Token)
-	} else if cfg.APIKey != "" {
-		c, err = planka.APIKeyClient(cfg.URL, cfg.APIKey)
+	if token != "" {
+		c, err = planka.AuthClient(url, token)
+	} else if apiKey != "" {
+		c, err = planka.APIKeyClient(url, apiKey)
 	} else {
-		c, err = planka.NewClientWithResponses(cfg.URL + "/api")
+		c, err = planka.NewClientWithResponses(url + "/api")
 	}
 	if err != nil {
 		fisk.Fatalf("error creating client: %v", err)
@@ -86,8 +103,9 @@ func main() {
 			return err
 		}
 		cfg.URL = loginURL
-		cfg.Token = token
 		cfg.Username = loginUser
+		keychainSet("url", loginURL)
+		keychainSet("token", token)
 		return saveConfig(cfg)
 	})
 
@@ -97,8 +115,9 @@ func main() {
 	apiKeyCmd.Arg("key", "API key").Required().StringVar(&apiKey)
 	apiKeyCmd.Action(func(_ *fisk.ParseContext) error {
 		cfg.URL = apiKeyURL
-		cfg.APIKey = apiKey
-		cfg.Token = ""
+		keychainSet("url", apiKeyURL)
+		keychainSet("api_key", apiKey)
+		keychainSet("token", "")
 		return saveConfig(cfg)
 	})
 
@@ -111,17 +130,27 @@ func main() {
 		if resp.JSON200 == nil {
 			return fmt.Errorf("not authenticated: %s", string(resp.Body))
 		}
+		userID, _ := keychainGet("user_id")
 		for _, u := range resp.JSON200.Items {
-			if u.Id == cfg.UserID {
+			if u.Id == userID {
 				if u.Username != nil {
 					cfg.Username = *u.Username
+					keychainSet("user_id", u.Id)
 				}
 				return saveConfig(cfg)
 			}
 		}
 		fmt.Printf("Username: %s\n", cfg.Username)
-		fmt.Printf("ID: %s\n", cfg.UserID)
 		return nil
+	})
+
+	authCmd.Command("logout", "Clear authentication").Action(func(_ *fisk.ParseContext) error {
+		if err := keychainClear(); err != nil {
+			return err
+		}
+		cfg.URL = ""
+		cfg.Username = ""
+		return saveConfig(cfg)
 	})
 
 	// ---- projects ----
