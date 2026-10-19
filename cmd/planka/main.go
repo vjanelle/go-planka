@@ -93,11 +93,24 @@ func main() {
 	authCmd := app.Command("auth", "Authentication")
 
 	var loginURL, loginUser, loginPass string
-	loginCmd := authCmd.Command("login", "Login with username and password")
-	loginCmd.Arg("url", "Planka URL").Required().StringVar(&loginURL)
-	loginCmd.Arg("username", "Username").Required().StringVar(&loginUser)
-	loginCmd.Arg("password", "Password").Required().StringVar(&loginPass)
+	loginCmd := authCmd.Command("login", "Login with username and password (interactive when not configured)")
+	loginCmd.Arg("url", "Planka URL").StringVar(&loginURL)
+	loginCmd.Arg("username", "Username").StringVar(&loginUser)
+	loginCmd.Arg("password", "Password").StringVar(&loginPass)
 	loginCmd.Action(func(_ *fisk.ParseContext) error {
+		if missing := firstMissingLoginArg(loginURL, loginUser, loginPass); missing != nil {
+			if helpRequested(os.Args[1:]) {
+				return nil // usage already printed; do not prompt or log in
+			}
+			if configured(cfg) {
+				return missing // same error fisk emitted before this change
+			}
+			var err error
+			loginURL, loginUser, loginPass, err = promptLogin(loginURL, loginUser, loginPass, cfg)
+			if err != nil {
+				return err
+			}
+		}
 		token, err := planka.Login(ctx, loginURL, loginUser, loginPass)
 		if err != nil {
 			return err
@@ -110,10 +123,23 @@ func main() {
 	})
 
 	var apiKeyURL, apiKey string
-	apiKeyCmd := authCmd.Command("api-key", "Use API key")
-	apiKeyCmd.Arg("url", "Planka URL").Required().StringVar(&apiKeyURL)
-	apiKeyCmd.Arg("key", "API key").Required().StringVar(&apiKey)
+	apiKeyCmd := authCmd.Command("api-key", "Use API key (interactive when not configured)")
+	apiKeyCmd.Arg("url", "Planka URL").StringVar(&apiKeyURL)
+	apiKeyCmd.Arg("key", "API key").StringVar(&apiKey)
 	apiKeyCmd.Action(func(_ *fisk.ParseContext) error {
+		if missing := firstMissingAPIKeyArg(apiKeyURL, apiKey); missing != nil {
+			if helpRequested(os.Args[1:]) {
+				return nil // usage already printed; do not prompt or store the key
+			}
+			if configured(cfg) {
+				return missing // same error fisk emitted before this change
+			}
+			var err error
+			apiKeyURL, apiKey, err = promptAPIKey(apiKeyURL, apiKey, cfg)
+			if err != nil {
+				return err
+			}
+		}
 		cfg.URL = apiKeyURL
 		keychainSet("url", apiKeyURL)
 		keychainSet("api_key", apiKey)

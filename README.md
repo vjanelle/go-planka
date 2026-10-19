@@ -85,9 +85,11 @@ go install github.com/vjanelle/go-planka/cmd/planka
 ```bash
 # Login
 planka auth login https://your-planka-instance.com admin admin
+planka auth login  # no saved config yet: interactive wizard
 
 # Or use API key
 planka auth api-key https://your-planka-instance.com your-api-key
+planka auth api-key  # no saved config yet: interactive wizard
 
 # List projects
 planka projects list
